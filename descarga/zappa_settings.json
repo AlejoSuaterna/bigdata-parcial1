@@ -19,6 +19,12 @@
                         "s3:ObjectCreated:*"
                     ]
                 }
+            },
+            {
+                "function": "lambda_function.lambda_handler",
+                "event_source": {
+                    "schedule": "cron(0 12 * * ? *)"
+                }
             }
         ]
     }
