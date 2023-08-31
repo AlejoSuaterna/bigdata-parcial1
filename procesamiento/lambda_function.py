@@ -18,25 +18,28 @@ def process_news(html_content):
 
     return '\n'.join(processed_data)
 
-
 def lambda_handler(event, context):
     current_date = datetime.today().strftime('%Y-%m-%d')
     s3 = boto3.resource('s3')
     bucket_name = 'parcialc1'
+    
     for newspaper in ['eltiempo', 'publimetro']:
         object_key = f'news/raw/{newspaper}-{current_date}.html'
         obj = s3.Object(bucket_name, object_key)
-        body = obj.get()['Body'].read()
-        processed_data = process_news(body)
-        csv_key = f'headlines/final/periodico={newspaper}/year'\
-            '={current_date[:4]}'\
-            '/month={current_date[5:7]}/{current_date}.csv'
-        s3_client = boto3.client('s3')
-        s3_client.put_object(
-            Body=processed_data, Bucket="parcialc1", Key=csv_key
-            )
-        print(f'Data processed and saved for {newspaper}: {csv_key}')
-
+        
+        try:
+            body = obj.get()['Body'].read()
+            processed_data = process_news(body)
+            
+            csv_key = f'headlines/final/periodico={newspaper}/year={current_date[:4]}/month={current_date[5:7]}/{current_date}.csv'
+            
+            s3_client = boto3.client('s3')
+            s3_client.put_object(Body=processed_data.encode(), Bucket=bucket_name, Key=csv_key) 
+            
+            print(f'Data processed and saved for {newspaper}: {csv_key}')
+        except Exception as e:
+            print(f'Error processing data for {newspaper}: {e}')
+    
     return {
         'statusCode': 200,
         'body': 'Data processing and saving completed successfully'
