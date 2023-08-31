@@ -62,10 +62,10 @@ jobs:
   
       - name: Deploy to Lambda (Descarga)
         run: |
-          source descarga_env/bin/activate
+          descarga_env\Scripts\activate.bat
           zappa deploy dev
   
       - name: Deploy to Lambda (Procesamiento)
         run: |
-          source procesamiento_env/bin/activate
+          procesamiento_env\Scripts\activate.bat
           zappa deploy dev
