@@ -14,15 +14,6 @@
             {
                 "function": "lambda_function.lambda_handler",
                 "event_source": {
-                    "arn": "arn:aws:s3:::parcialc1",
-                    "events": [
-                        "s3:ObjectCreated:*"
-                    ]
-                }
-            },
-            {
-                "function": "lambda_function.lambda_handler",
-                "event_source": {
                     "schedule": "cron(0 12 * * ? *)"
                 }
             }
