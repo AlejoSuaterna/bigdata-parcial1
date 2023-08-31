@@ -1,31 +1,57 @@
-import os
 import boto3
+import json
 from bs4 import BeautifulSoup
 from datetime import datetime
 import csv
 
 def lambda_handler(event, context):
-    # Conectar a S3
-    s3 = boto3.client("s3")
-    bucket_name = "parcialc1"
-    current_date = datetime.now().strftime("%Y-%m-%d")
-    s3_key = f"news/raw/contenido-{current_date}.html"
-    
-    # Obtener el contenido HTML desde S3
-    response = s3.get_object(Bucket=bucket_name, Key=s3_key)
-    content = response["Body"].read()
-    
-    # Procesar con Beautiful Soup
-    soup = BeautifulSoup(content, "html.parser")
-    # ... Aquí realiza el procesamiento, extrayendo categoría, titular y enlace
-
-    # Guardar en un archivo CSV local
-    csv_filename = f"/tmp/news_{current_date}.csv"
-    with open(csv_filename, mode="w", newline="", encoding="utf-8") as csvfile:
-        csv_writer = csv.writer(csvfile)
-        csv_writer.writerow(["Categoría", "Titular", "Enlace"])
-        # ... Aquí agrega las filas al CSV
-
-    # Subir el archivo CSV a S3
-    s3_key_processed = f"headlines/final/periodico=eltiempo/year={current_date[:4]}/month={current_date[5:7]}/{current_date}.csv"
-    s3.upload_file(csv_filename, bucket_name, s3_key_processed)
+    try:
+        # Obtener información sobre el archivo cargado desde el evento
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        bucket_name = 'parcialc1'
+        object_key = f"news/raw/contenido-{current_date}.html"
+        # Descargar contenido del archivo desde S3
+        s3_client = boto3.client('s3')
+        response = s3_client.get_object(
+            Bucket=bucket_name,
+            Key=object_key
+        )
+        html_content = response['Body'].read().decode('utf-8')
+        # Procesar contenido HTML con Beautiful Soup
+        soup = BeautifulSoup(html_content, 'html.parser')
+        # Extraer información de las noticias
+        news_data = []
+        for news_item in soup.find_all('div', class_='news'):
+            category = news_item.find('span', class_='category').text
+            title = news_item.find('h2', class_='title').text
+            link = news_item.find('a')['href']
+            news_data.append({
+                'category': category,
+                'title': title,
+                'link': link
+            })
+        # Crear contenido CSV
+        csv_content = 'category,title,link\n'
+        for news in news_data:
+            csv_content += (
+                f'"{news["category"]}", "{news["title"]}", "{news["link"]}"\n'
+            )
+        # Subir el archivo CSV a S3
+        s3_key = f'headlines/final/{object_key[13:-5]}.csv'
+        s3_client.put_object(
+            Body=csv_content,
+            Bucket=bucket_name,
+            Key=s3_key,
+            ContentType='text/csv'
+        )
+        return {
+            'statusCode': 200,
+            'body': json.dumps(
+                'Datos procesados y guardados en CSV exitosamente'
+            )
+        }
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'body': json.dumps(f'Error: {str(e)}')
+        }
