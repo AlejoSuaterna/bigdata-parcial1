@@ -73,16 +73,12 @@ jobs:
         run: |
           source env/bin/activate
           cd descarga
-          zappa deploy
+          zappa deploy dev
+          zappa invoke dev lambda_function.lambda_handler
 
       - name: zappa deploy processing
         run: |
           source env/bin/activate 
           cd procesamiento
-          zappa update
+          zappa deploy dev
   
-  
-
-      # - name: Test with pytest
-      #   run: |
-      #     pytest

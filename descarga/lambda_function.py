@@ -1,4 +1,3 @@
-import os
 import requests
 import boto3
 from datetime import datetime
