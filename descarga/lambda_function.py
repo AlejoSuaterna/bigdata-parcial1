@@ -2,6 +2,7 @@ import requests
 import boto3
 from datetime import datetime
 
+
 def lambda_handler(event, context):
 
     s3_bucket_name = 'parcialc1'
@@ -18,15 +19,23 @@ def lambda_handler(event, context):
 
             # Generar la ruta en S3
             now = datetime.now()
-            s3_path = f'{s3_base_path}/{newspaper}/{now.strftime("%Y-%m-%d")}.html'
+            s3_path = (
+                f'{s3_base_path}/{newspaper}/{now.strftime("%Y-%m-%d")}.html'
+            )
 
             # Subir el contenido a S3
             s3_client = boto3.client('s3')
-            s3_client.put_object(Body=content, Bucket=s3_bucket_name, Key=s3_path)
+            s3_client.put_object(
+                Body=content,
+                Bucket=s3_bucket_name,
+                Key=s3_path
+            )
 
-            print(f'Página de {newspaper} descargada y almacenada en S3: {s3_path}')
+            print(
+                f'Página descargada y almacenada en S3: {s3_path}'
+            )
         else:
-            print(f'Error al descargar la página de {newspaper}: {response.status_code}')
+            print(f'Error al descargar la página: {response.status_code}')
 
     return {
         'statusCode': 200,
